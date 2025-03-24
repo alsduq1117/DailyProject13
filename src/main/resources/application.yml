@@ -1,0 +1,51 @@
+spring:
+  h2:
+    console:
+      path: /h2-console
+      enabled: true
+
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/springblog
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  batch:
+    job:
+      name: ${job.name:NONE}
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your-google-client-id
+            client-secret: your-google-client-secret
+            scope: email,profile
+
+logging:
+  level:
+    org.springframework.cache: trace
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+
+jwt:
+  secret: your-secret-key-1234567890-1234567890 # 256비트 이상의 키 사용
+  expiration: 86400000 # 24시간
