@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -19,31 +18,18 @@ public class LoggingUsernamePasswordFilter extends UsernamePasswordAuthenticatio
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        log.info("🔐 로그인 시도 - IP: {}", request.getRemoteAddr());
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
+        log.info("[1/4] UsernamePasswordFilter: 로그인 요청 수신 (IP: {})", request.getRemoteAddr());
 
         String username = obtainUsername(request);
         String password = obtainPassword(request);
 
-        log.info("요청 파라미터 - username: {}, password: [PROTECTED]", username);
+        log.info("추출 정보 - 사용자명: {}, 비밀번호 길이: {}", username, password != null ? password.length() : 0);
 
-        UsernamePasswordAuthenticationToken authRequest = UsernamePasswordAuthenticationToken.unauthenticated(username, password);
+        UsernamePasswordAuthenticationToken authRequest =
+                UsernamePasswordAuthenticationToken.unauthenticated(username, password);
         authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
 
         return this.getAuthenticationManager().authenticate(authRequest);
-    }
-
-    @Override
-    protected String obtainUsername(HttpServletRequest request) {
-        String username = super.obtainUsername(request);
-        log.info("추출된 username: {}", username);
-        return username != null ? username.trim() : "";
-    }
-
-    @Override
-    protected String obtainPassword(HttpServletRequest request) {
-        String password = super.obtainPassword(request);
-        log.info("추출된 password: [PROTECTED]");
-        return password != null ? password : "";
     }
 }
