@@ -3,15 +3,13 @@ package com.example.project13.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SignupRequest {
-
+@NoArgsConstructor
+public class LoginRequest {
     @NotBlank
     @Email
     private String email;
@@ -20,10 +18,9 @@ public class SignupRequest {
     @Size(min = 8)
     private String password;
 
-    public SignupRequest(String email, String password) {
+    @Builder
+    public LoginRequest(String email, String password) {
         this.email = email;
         this.password = password;
     }
-
-
 }

@@ -47,5 +47,6 @@ logging:
 
 
 jwt:
-  secret: your-secret-key-1234567890-1234567890 # 256비트 이상의 키 사용
-  expiration: 86400000 # 24시간
+  secret: 6gCPYVZ7kAW7UiMrRjThGoiweJcUxA3e
+  access-expiration: 3600000 # 1시간 (밀리초)
+  refresh-expiration: 2592000000 # 30일 (밀리초 단위)
