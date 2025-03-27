@@ -32,15 +32,15 @@ public class JwtUtil {
 
     // 액세스 토큰 생성
     public String generateAccessToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("authorities", userDetails.getAuthorities());
+        UserPrincipal principal = (UserPrincipal) userDetails;
 
         return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .claims(claims)
+                .subject(principal.getUsername())
+                .claim("authorities", principal.getAuthorities())
+                .claim("provider", principal.getProvider().name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpiration))
-                .signWith(secretKey, Jwts.SIG.HS256)
+                .signWith(secretKey)
                 .compact();
     }
 

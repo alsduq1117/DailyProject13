@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class LoginFailHandler implements AuthenticationFailureHandler {
+public class AuthFailureHandler implements AuthenticationFailureHandler {
 
     private final ObjectMapper objectMapper;
 

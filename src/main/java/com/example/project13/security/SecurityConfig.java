@@ -40,15 +40,12 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     // 사용자 상세 서비스 (DB에서 사용자 정보 조회)
     private final CustomUserDetailsService userDetailsService;
-    //    // OAuth2 로그인 성공 핸들러
-//    private final OAuth2LoginSuccessHandler oAuth2SuccessHandler;
-//    // OAuth2 사용자 서비스 (소셜 로그인 사용자 처리)
-//    private final CustomOAuth2UserService oAuth2UserService;
     // JSON 변환기
     private final ObjectMapper objectMapper;
+    private final AuthSuccessHandler authSuccessHandler;
+    private final AuthFailureHandler authFailureHandler;
 
-    private final LoginSuccessHandler loginSuccessHandler;
-    private final LoginFailHandler loginFailHandler;
+    private final CustomOAuth2UserService oAuth2UserService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -66,54 +63,30 @@ public class SecurityConfig {
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 허용할 경로
-                        .requestMatchers("/", "/auth/**",       // 인증 관련 엔드포인트
-                                "/oauth2/**",     // OAuth2 관련 엔드포인트
-                                "/error",         // 에러 핸들링
-                                "/swagger-ui/**", // API 문서
-                                "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/", "/auth/**", "/oauth2/**", "/error", "/swagger-ui/**", "/v3/api-docs/**" , "/api/test/**").permitAll()
                         // ADMIN 역할만 접근 가능한 경로
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated())
-                // OAuth2 로그인 설정
-//                .oauth2Login(oauth2 -> oauth2
-//                        /**
-//                         * - 예시: Google 로그인 시작 → /oauth2/authorization/google
-//                         */
-//                        .authorizationEndpoint(authorization -> authorization
-//                                .baseUri("/oauth2/authorization")
-//                        )
-//
-//                        /**
-//                         * - 예시: Google 리다이렉트 → /login/oauth2/code/google
-//                         */
-//                        .redirectionEndpoint(redirection -> redirection
-//                                .baseUri("/login/oauth2/code/*")
-//                        )
-//
-//                        /**
-//                         * [사용자 정보 조회 설정]
-//                         * - 인증 성공 후 사용자 상세 정보 로드
-//                         * - CustomOAuth2UserService에서 처리할 작업:
-//                         *   1. 소셜 사용자 정보를 기반으로 회원 가입/업데이트
-//                         *   2. 권한 정보 설정
-//                         *   3. 커스텀 UserDetails 객체 생성
-//                         */
-//                        .userInfoEndpoint(userInfo -> userInfo
-//                                .userService(oAuth2UserService)
-//                        )
-//                        .successHandler(oAuth2SuccessHandler)
-//                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(endpoint -> endpoint
+                                .userService(oAuth2UserService)
+                        )
+                        .successHandler(authSuccessHandler)
+                        .failureHandler(authFailureHandler)
+                )
+
+
                 // 예외 처리
                 .exceptionHandling(ex -> ex
                         // 인증 실패 시 처리
                         .authenticationEntryPoint(jwtEntryPoint)
                         // 인가 실패 시 처리
                         .accessDeniedHandler(new JwtAccessDeniedHandler(objectMapper)))
-                // JWT 인증 필터 추가
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 // 일반 로그인 필터 추가
-                .addFilterBefore(emailPasswordAuthFilter(authenticationManager(), objectMapper), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(emailPasswordAuthFilter(authenticationManager(), objectMapper), UsernamePasswordAuthenticationFilter.class)
+                // JWT 인증 필터 추가
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -122,8 +95,8 @@ public class SecurityConfig {
     @Bean
     public EmailPasswordAuthFilter emailPasswordAuthFilter(AuthenticationManager authenticationManager, ObjectMapper objectMapper) throws Exception {
         EmailPasswordAuthFilter filter = new EmailPasswordAuthFilter(new AntPathRequestMatcher("/auth/login", "POST"), authenticationManager, objectMapper);
-        filter.setAuthenticationSuccessHandler(loginSuccessHandler);
-        filter.setAuthenticationFailureHandler(loginFailHandler);
+        filter.setAuthenticationSuccessHandler(authSuccessHandler);
+        filter.setAuthenticationFailureHandler(authFailureHandler);
         return filter;
     }
 
@@ -150,9 +123,9 @@ public class SecurityConfig {
                 "http://localhost:3000"   // 개발용 로컬호스트
         ));
         // 허용할 HTTP 메소드
-        config.setAllowedMethods(Arrays.asList("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         // 허용할 헤더
-        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         // 노출할 헤더
         config.setExposedHeaders(Arrays.asList("Authorization", "X-Refresh-Token"));
         // 자격 증명 허용
@@ -169,8 +142,7 @@ public class SecurityConfig {
     // 패스워드 인코더 빈 등록
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // BCrypt 해시 알고리즘 사용 (강도 12)
-        return new BCryptPasswordEncoder(12); // 실무에서는 10~12 strength 권장
+        return new BCryptPasswordEncoder(10);
     }
 
     // 웹 보안 커스터마이저 (보안 예외 적용 경로)
@@ -178,11 +150,7 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
                 // 보안 필터 적용 제외할 경로
-                .requestMatchers("/favicon.ico",    // 파비콘
-                        "/static/**",      // 정적 리소스
-                        "/resources/**",   // 리소스
-                        "/h2-console/**"   // H2 데이터베이스 콘솔 (개발용)
-                );
+                .requestMatchers("/favicon.ico", "/static/**", "/resources/**", "/h2-console/**");
     }
 }
 

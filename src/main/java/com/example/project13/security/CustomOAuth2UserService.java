@@ -1,54 +1,49 @@
-//package com.example.project13.security;
-//
-//import com.example.project13.domain.User;
-//import com.example.project13.repository.UserRepository;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.security.core.authority.SimpleGrantedAuthority;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.stereotype.Service;
-//
-//import java.util.Collections;
-//import java.util.Map;
-//
-//@Service
-//@RequiredArgsConstructor
-//public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
-//
-//    private final UserRepository userRepository;
-//    private final PasswordEncoder passwordEncoder;
-//
-//    @Override
-//    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-//        // 기본 OAuth2UserService 생성
-//        OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
-//        OAuth2User oAuth2User = delegate.loadUser(userRequest);
-//
-//        // registrationId 추출 (google, kakao, naver 등)
-//        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-//        // OAuth2 로그인 시 키가 되는 값 (구글: sub, 카카오: id, 네이버: response)
-//        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
-//
-//        // 소셜 로그인 사용자 정보 DTO
-//        Map<String, Object> attributes = oAuth2User.getAttributes();
-//
-//        // registrationId에 따라 유저 정보를 통해 공통된 UserProfile 객체 생성
-//        UserProfile userProfile = OAuth2UserInfoFactory.getOAuth2UserInfo(registrationId, attributes);
-//
-//        // 사용자 이메일 추출
-//        String email = userProfile.getEmail();
-//        if (email == null || email.isEmpty()) {
-//            throw new OAuth2AuthenticationException("이메일 정보를 가져올 수 없습니다.");
-//        }
-//
-//        // DB에서 사용자 조회 또는 생성
-//        User user = userRepository.findByEmail(email).orElseGet(() -> createSocialUser(userProfile, registrationId));
-//
-//        return new CustomOAuth2User(Collections.singleton(new SimpleGrantedAuthority(user.getRole().name())), attributes, userNameAttributeName, user.getEmail(), user.getRole());
-//    }
-//
-//    private User createSocialUser(UserProfile userProfile, String provider) {
-//        User user = User.builder().email(userProfile.getEmail()).password(passwordEncoder.encode(UUID.randomUUID().toString())) // 임시 비밀번호
-//                .provider(AuthProvider.valueOf(provider.toUpperCase())).role(Role.USER).build();
-//        return userRepository.save(user);
-//    }
-//}
+package com.example.project13.security;
+
+import com.example.project13.domain.AuthProvider;
+import com.example.project13.domain.User;
+import com.example.project13.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+
+@Component
+@RequiredArgsConstructor
+public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) {
+        OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
+        AuthProvider provider = AuthProvider.valueOf(
+                userRequest.getClientRegistration().getRegistrationId().toUpperCase()
+        );
+
+        String email = extractEmail(oAuth2User.getAttributes(), provider);
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> registerOAuth2User(provider, email));
+
+        return new UserPrincipal(user, oAuth2User.getAttributes());
+    }
+
+    private String extractEmail(Map<String, Object> attributes, AuthProvider provider) {
+        return switch (provider) {
+            case GOOGLE -> (String) attributes.get("email");
+            case KAKAO -> ((Map<String, Object>) attributes.get("kakao_account")).get("email").toString();
+            case NAVER -> ((Map<String, Object>) attributes.get("response")).get("email").toString();
+            default -> throw new IllegalArgumentException("Invalid provider");
+        };
+    }
+
+    private User registerOAuth2User(AuthProvider provider, String email) {
+        return userRepository.save(
+                User.createOAuth2User(email, provider)
+        );
+    }
+}
