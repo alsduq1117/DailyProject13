@@ -11,6 +11,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// UserPrincipal.java
+/**
+ * 사용자 인증 정보를 담는 핵심 클래스
+ * - UserDetails(일반 로그인)와 OAuth2User(OAuth2 로그인) 인터페이스 동시 구현
+ * - 두 인증 방식을 통합하여 처리할 수 있도록 설계
+ */
 public class UserPrincipal implements UserDetails, OAuth2User {
 
     private final User user;
