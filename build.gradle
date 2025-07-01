@@ -71,6 +71,13 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    implementation 'org.seleniumhq.selenium:selenium-java:4.20.0'
+    implementation 'io.github.bonigarcia:webdrivermanager:5.8.0'
+    implementation 'com.opencsv:opencsv:5.7.1'
+
+    implementation 'com.google.api-client:google-api-client:2.2.0'
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev222-1.25.0'
 }
 
 tasks.named('test') {

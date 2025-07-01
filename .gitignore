@@ -35,3 +35,27 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+### 💾 실행/빌드 결과 ###
+*.log
+*.hprof
+heapdump*
+
+### 🧪 테스트/커버리지 ###
+test-results/
+coverage/
+
+### 🔒 환경/보안 설정 파일 ###
+.env
+.env.*
+application-*.yml
+application-*.yaml
+application-*.properties
+
+*.keystore
+*.jks
+*.p12
+*.crt
+*.pem
+*.key

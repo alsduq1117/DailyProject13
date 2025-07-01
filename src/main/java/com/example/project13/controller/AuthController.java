@@ -1,7 +1,6 @@
 package com.example.project13.controller;
 
 import com.example.project13.domain.User;
-import com.example.project13.request.LoginRequest;
 import com.example.project13.request.SignupRequest;
 import com.example.project13.service.AuthService;
 import jakarta.validation.Valid;

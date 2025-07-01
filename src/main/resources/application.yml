@@ -34,9 +34,9 @@ spring:
       client:
         registration:
           google:
-            client-id: 981882976984-c6f0re8nfjsjgui8nb1l14uh613t3se1.apps.googleusercontent.com
-            client-secret: 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
-            scope: [ email, profile ]
+            client-id: 990877894958-66jm027da7bvvifm88m239av939isacq.apps.googleusercontent.com
+            client-secret: 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
+            scope: [ profile, email, https://www.googleapis.com/auth/youtube.force-ssl ]
             redirect-uri: "http://localhost:8080/login/oauth2/code/google"
           naver:
             client-id: 3Gxl0bqtzcEerlZ4iull
@@ -56,6 +56,8 @@ spring:
               - account_email
             client-name: Kakao
         provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&access_type=offline
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
             token-uri: https://nid.naver.com/oauth2.0/token
